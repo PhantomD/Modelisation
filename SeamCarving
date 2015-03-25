@@ -38,23 +38,64 @@ public class SeamCarving
         }
     }
 
-    public static int writepgm(int[][] image, String filename){
-        /*ecrire P2 ; fichier pgm au format ascii 
-        ecrire image[0].length();
-        ecrire image.length();
-        ecrire 255;
-        int cpt = 0;
-        for ( int i = 0 ; i < image.length ; i++){
-            for ( int j = 0 ; j < image[0].length ; j++){
-                ecrire image[i][j];
-                cpt = cpt +1;
-                if(cpt == 0%26){
-                    passer à la ligne
-                }
-            }
-        }*/
-        return 0;
-    }
+    public static int writepgm(int[][] image, String filename) {
+
+		File fichier = new File(filename);
+
+		try {
+			FileOutputStream fos = new FileOutputStream(fichier);
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		Writer ecriture = null;
+		try {
+			ecriture = new OutputStreamWriter(new FileOutputStream(fichier));
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
+			try {
+				int cpt = 0;
+				ecriture.append("P2"); 
+				ecriture.append(""+image[0].length); // largeur 
+				ecriture.append(" "+image.length + "\n");  // hauteur
+				for(int i = 0; i < image.length; i++){    
+				  for(int j = 0; j < image[0].length; j++){
+					  
+					  ecriture.append(" "+ image[i][j]);
+					  cpt = cpt+1;
+					  if(cpt == 0%26){
+						  ecriture.append("\n");
+					  }
+					  
+				  }
+
+				}
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} finally {
+			try {
+				ecriture.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		/*
+		 * ecrire P2 ; fichier pgm au format ascii ecrire image[0].length();
+		 * ecrire image.length(); ecrire 255; int cpt = 0; for ( int i = 0 ; i <
+		 * image.length ; i++){ for ( int j = 0 ; j < image[0].length ; j++){
+		 * ecrire image[i][j]; cpt = cpt +1; if(cpt == 0%26){ passer à la ligne
+		 * } } }
+		 */
+		return 0;
+	}
 
     
     
@@ -84,19 +125,28 @@ public class SeamCarving
         int h = itr.length; // hauteur du tableau d'interet
         Graph g = new Graph(h*l+2);
         for ( int i = 0 ; i < h ; i++){
-            for ( int j = 0 ; j < l ; j++){
-                    g.addEdge(new Edge(h*j+i+1, h*j+(i+1)+1, itr[i][j], 0)); //ajouter arete de capacite interet du pixel entre pixel et pixel de droite
-                    g.addEdge(new Edge(h*j+i+1, h*j+(i-1)+1, (int)Double.POSITIVE_INFINITY, 0)); //ajouter arete de capacite +infini entre pixel et pixel de gauche
-                    g.addEdge(new Edge(h*j+i+1, h*(j-1)+(i-1)+1, (int)Double.POSITIVE_INFINITY, 0)); //ajouter arete de capacite +infini entre pixel et pixel du haut-gauche
-                    g.addEdge(new Edge(h*j+i+1, h*(j+1)+(i-1)+1, (int)Double.POSITIVE_INFINITY, 0)); //ajouter arete de capacite +infini entre pixel et pixel du bas-gauche
+            for ( int j = 0 ; j < l ; j++){               
                 if(j==0){
                     g.addEdge(new Edge(0, h*j+i+1, (int)Double.POSITIVE_INFINITY, 0)); //ajouter arete de capacite+infini entre source (0) et pixel
+                    g.addEdge(new Edge(h*j+i+1, h*(j+1)+i+1, itr[i][j], 0)); //ajouter arete de capacite interet du pixel entre pixel et pixel de droite
                 }
                 else if(j==itr[0].length-1){
                     g.addEdge(new Edge(h*j+i+1, h*l+1, itr[i][j], 0)); //ajouter arete de capacite interet du pixel entre pixel et destination 
                 }
+                else{   
+                    g.addEdge(new Edge(h*j+i+1, h*(j+1)+i+1, itr[i][j], 0)); //ajouter arete de capacite interet du pixel entre pixel et pixel de droite
+                    g.addEdge(new Edge(h*j+i+1, h*(j-1)+i+1, (int)Double.POSITIVE_INFINITY, 0)); //ajouter arete de capacite +infini entre pixel et pixel de gauche
+                    if(i!=0){
+                        g.addEdge(new Edge(h*j+i+1, h*(j-1)+(i-1)+1, (int)Double.POSITIVE_INFINITY, 0)); //ajouter arete de capacite +infini entre pixel et pixel du haut-gauche
+                    }
+                    if(i!=h-1){
+                        g.addEdge(new Edge(h*j+i+1, h*(j-1)+(i+1)+1, (int)Double.POSITIVE_INFINITY, 0)); //ajouter arete de capacite +infini entre pixel et pixel du bas-gauche
+                    }  
+                }
+                
             }
         }
+        System.out.println(g.edges());
         return g;
     }
 
@@ -115,6 +165,9 @@ public class SeamCarving
         img[2][2]=100;
         img[2][3]=200;
         System.out.println(interest(img));
+        System.out.println(tograph(interest(img)));
+        tograph(interest(img)).writeFile("essai.txt");
     }
 
 }
+
