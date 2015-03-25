@@ -1,0 +1,42 @@
+public static int writepgm(int[][] image, String filename) {
+
+		File fichier = new File(filename);
+
+		try {
+			FileOutputStream fos = new FileOutputStream(fichier);
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		Writer ecriture = null;
+		try {
+			ecriture = new OutputStreamWriter(new FileOutputStream(fichier));
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
+			try {
+				ecriture.append("P2");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} finally {
+			try {
+				ecriture.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		/*
+		 * ecrire P2 ; fichier pgm au format ascii ecrire image[0].length();
+		 * ecrire image.length(); ecrire 255; int cpt = 0; for ( int i = 0 ; i <
+		 * image.length ; i++){ for ( int j = 0 ; j < image[0].length ; j++){
+		 * ecrire image[i][j]; cpt = cpt +1; if(cpt == 0%26){ passer à la ligne
+		 * } } }
+		 */
+		return 0;
+	}
