@@ -80,22 +80,24 @@ public class SeamCarving
     }
     
     public static Graph tograph(int[][] itr){
-        Graph g = new Graph(itr.length*itr[0].length+2);
-        for ( int i = 0 ; i < itr.length ; i++){
-            for ( int j = 0 ; j < itr[0].length ; j++){
-                    g.addEdge(new Edge(j, i, itr[i][j], 0)); //ajouter arete de cap interet du pixel entre pixel et pixel de droite
-                    ajouter arete de cap -infini entre pixel et pixel de gauche
-                    ajouter arete de cap -infini entre pixel et pixel du haut-gauche
-                    ajouter arete de cap -infini entre pixel et pixel du bas-gauche
+        int l = itr[0].length; // largeur du tableau d'interet
+        int h = itr.length; // hauteur du tableau d'interet
+        Graph g = new Graph(h*l+2);
+        for ( int i = 0 ; i < h ; i++){
+            for ( int j = 0 ; j < l ; j++){
+                    g.addEdge(new Edge(h*j+i+1, h*j+(i+1)+1, itr[i][j], 0)); //ajouter arete de capacite interet du pixel entre pixel et pixel de droite
+                    g.addEdge(new Edge(h*j+i+1, h*j+(i-1)+1, (int)Double.POSITIVE_INFINITY, 0)); //ajouter arete de capacite +infini entre pixel et pixel de gauche
+                    g.addEdge(new Edge(h*j+i+1, h*(j-1)+(i-1)+1, (int)Double.POSITIVE_INFINITY, 0)); //ajouter arete de capacite +infini entre pixel et pixel du haut-gauche
+                    g.addEdge(new Edge(h*j+i+1, h*(j+1)+(i-1)+1, (int)Double.POSITIVE_INFINITY, 0)); //ajouter arete de capacite +infini entre pixel et pixel du bas-gauche
                 if(j==0){
-                    ajouter arete de capacit+infini entre pixel et source
+                    g.addEdge(new Edge(0, h*j+i+1, (int)Double.POSITIVE_INFINITY, 0)); //ajouter arete de capacite+infini entre source (0) et pixel
                 }
                 else if(j==itr[0].length-1){
-                    ajouter arete de cap interet du pixel entre pixel et dest
+                    g.addEdge(new Edge(h*j+i+1, h*l+1, itr[i][j], 0)); //ajouter arete de capacite interet du pixel entre pixel et destination 
                 }
             }
         }
-        */return g;
+        return g;
     }
 
     public static void main(String[] args) {
@@ -113,3 +115,6 @@ public class SeamCarving
         img[2][2]=100;
         img[2][3]=200;
         System.out.println(interest(img));
+    }
+
+}
