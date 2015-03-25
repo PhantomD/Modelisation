@@ -1,0 +1,115 @@
+package modelisation;
+
+import java.util.ArrayList;
+import java.io.*;
+import java.util.*;
+public class SeamCarving
+{
+
+   public static int[][] readpgm(String fn)
+	 {
+        try {
+            InputStream f = ClassLoader.getSystemClassLoader().getResourceAsStream(fn);
+            BufferedReader d = new BufferedReader(new InputStreamReader(f));
+            String magic = d.readLine();
+            String line = d.readLine();
+		   while (line.startsWith("#")) {
+			  line = d.readLine();
+		   }
+		   Scanner s = new Scanner(line);
+		   int width = s.nextInt();
+		   int height = s.nextInt();
+		   line = d.readLine();
+		   s = new Scanner(line);
+		   int maxVal = s.nextInt();
+		   int[][] im = new int[height][width];
+		   s = new Scanner(d);
+		   int count = 0;
+		   while (count < height*width) {
+			  im[count / width][count % width] = s.nextInt();
+			  count++;
+		   }
+		   return im;
+        }
+
+        catch(Throwable t) {
+            t.printStackTrace(System.err) ;
+            return null;
+        }
+    }
+
+    public static int writepgm(int[][] image, String filename){
+        /*ecrire P2 ; fichier pgm au format ascii 
+        ecrire image[0].length();
+        ecrire image.length();
+        ecrire 255;
+        int cpt = 0;
+        for ( int i = 0 ; i < image.length ; i++){
+            for ( int j = 0 ; j < image[0].length ; j++){
+                ecrire image[i][j];
+                cpt = cpt +1;
+                if(cpt == 0%26){
+                    passer à la ligne
+                }
+            }
+        }*/
+        return 0;
+    }
+
+    
+    
+    public static int[][] interest(int[][] image){
+        int[][] itr = new int[3][4];
+        for ( int i = 0 ; i < image.length ; i++){
+            for ( int j = 0 ; j < image[0].length ; j++){
+                if(j==0){
+                    itr[i][j]=Math.abs(image[i][j]-image[i][j+1]);
+                }
+                else if(j==image[0].length-1){
+                    itr[i][j]=Math.abs(image[i][j]-image[i][j-1]);
+                }
+                else{
+                    itr[i][j]=Math.abs(image[i][j]-(image[i][j-1]+image[i][j+1])/2);
+                }
+            }
+        }
+        System.out.println(itr[0][0]+"  "+itr[0][1]+"  "+itr[0][2]+"  "+itr[0][3]);
+        System.out.println(itr[1][0]+"  "+itr[1][1]+"  "+itr[1][2]+"  "+itr[1][3]);
+        System.out.println(itr[2][0]+"  "+itr[2][1]+"  "+itr[2][2]+"  "+itr[2][3]);
+        return itr;
+    }
+    
+    public static Graph tograph(int[][] itr){
+        Graph g = new Graph(itr.length*itr[0].length+2);
+        for ( int i = 0 ; i < itr.length ; i++){
+            for ( int j = 0 ; j < itr[0].length ; j++){
+                    g.addEdge(new Edge(j, i, itr[i][j], 0)); //ajouter arete de cap interet du pixel entre pixel et pixel de droite
+                    ajouter arete de cap -infini entre pixel et pixel de gauche
+                    ajouter arete de cap -infini entre pixel et pixel du haut-gauche
+                    ajouter arete de cap -infini entre pixel et pixel du bas-gauche
+                if(j==0){
+                    ajouter arete de capacit+infini entre pixel et source
+                }
+                else if(j==itr[0].length-1){
+                    ajouter arete de cap interet du pixel entre pixel et dest
+                }
+            }
+        }
+        */return g;
+    }
+
+    public static void main(String[] args) {
+        int[][]img = new int[3][4];
+        img[0][0]=3;
+        img[0][1]=11;
+        img[0][2]=24;
+        img[0][3]=39;
+        img[1][0]=8;
+        img[1][1]=21;
+        img[1][2]=29;
+        img[1][3]=39;
+        img[2][0]=74;
+        img[2][1]=80;
+        img[2][2]=100;
+        img[2][3]=200;
+        System.out.println(interest(img));
