@@ -9,9 +9,8 @@ public class SeamCarving
 
     public static int[][] img;
     public static int[][] res;
-    public static int[][] itr;
+    public static int[][] itrg;
     public static int[][] flotsmin; 
-    //HashMap<Integer, Integer> flotsmin; 
     public static int[] pere;
     public static int[] prof;
     public static int minf;
@@ -21,7 +20,7 @@ public class SeamCarving
     public static int[][] readpgm(String fn)
 	{
         try {
-            InputStream f = ClassLoader.getSystemClassLoader().getResourceAsStream(fn);
+            InputStream f = SeamCarving.class.getResourceAsStream(fn);
             System.out.println(f);
             BufferedReader d = new BufferedReader(new InputStreamReader(f));
             String magic = d.readLine();
@@ -107,24 +106,21 @@ public class SeamCarving
     
     
     public static int[][] interest(int[][] image){
-        itr = new int[image.length][image[0].length];
+        itrg = new int[image.length][image[0].length];
         for ( int i = 0 ; i < image.length ; i++){
             for ( int j = 0 ; j < image[0].length ; j++){
                 if(j==0){
-                    itr[i][j]=Math.abs(image[i][j]-image[i][j+1]);
+                    itrg[i][j]=Math.abs(image[i][j]-image[i][j+1]);
                 }
                 else if(j==image[0].length-1){
-                    itr[i][j]=Math.abs(image[i][j]-image[i][j-1]);
+                    itrg[i][j]=Math.abs(image[i][j]-image[i][j-1]);
                 }
                 else{
-                    itr[i][j]=Math.abs(image[i][j]-(image[i][j-1]+image[i][j+1])/2);
+                    itrg[i][j]=Math.abs(image[i][j]-(image[i][j-1]+image[i][j+1])/2);
                 }
             }
         }
-        System.out.println(itr[0][0]+"  "+itr[0][1]+"  "+itr[0][2]+"  "+itr[0][3]);
-        System.out.println(itr[1][0]+"  "+itr[1][1]+"  "+itr[1][2]+"  "+itr[1][3]);
-        System.out.println(itr[2][0]+"  "+itr[2][1]+"  "+itr[2][2]+"  "+itr[2][3]);
-        return itr;
+        return itrg;
     }
     
     public static Graph tograph(int[][] itr){
@@ -138,7 +134,7 @@ public class SeamCarving
                     g.addEdge(new Edge(h*j+i+1, h*(j+1)+i+1, itr[i][j], 0)); //ajouter arete de capacite interet du pixel entre pixel et pixel de droite
                 }
                 else if(j==itr[0].length-1){
-                    g.addEdge(new Edge(h*j+i+1, h*l+1, itr[i][j], 0)); //ajouter arete de capacite interet du pixel entre pixel et destination 
+                    g.addEdge(new Edge(h*j+i+1, (h*l)+1, itr[i][j], 0)); //ajouter arete de capacite interet du pixel entre pixel et destination 
                 }
                 else{   
                     g.addEdge(new Edge(h*j+i+1, h*(j+1)+i+1, itr[i][j], 0)); //ajouter arete de capacite interet du pixel entre pixel et pixel de droite
@@ -157,24 +153,25 @@ public class SeamCarving
     }
     
     public static int flotDepart(Graph g){
-        int h = itr.length; // recuperation de la hauteur de l'image
-        int l = itr[0].length; // recuperation de la longueur de l'image
+        int h = itrg.length; // recuperation de la hauteur de l'image
+        int l = itrg[0].length; // recuperation de la longueur de l'image
         int[] flotsminligne; 
         
         flotsminligne = new int[h]; // tableau de longueur h contenant la capacité min de chaque ligne du graphe
-        flotsmin = new int[h*l+2][h*l+2]; // capacités utilisee des aretes allant de h à l ;
-        //flotsmin = new HashMap<Integer, Integer>;
+        //flotsmin = new int[h*l+2][h*l+2]; // capacités utilisee des aretes allant de h à l ;
+        flotsmin = new int[h*l+2][4];// flot used du sommet h*l+2 au sommet situé à : 0 : droite, 1 : haut gauche, 2 : gauche, 3 : bas gauche
         for ( int j = 0 ; j < h ; j++){ // initialisation du tableau à +infini
             flotsminligne[j] = (int)Double.POSITIVE_INFINITY;
         }
         
         for(int i=0 ; i<h ; i++){ //ligne i
             for(int k = 0 ; k<l ; k++){ // colonne k
-                flotsminligne[i] = min(flotsminligne[i], itr[i][k]);
+                flotsminligne[i] = min(flotsminligne[i], itrg[i][k]);
                 
             }
             for(int k = 0 ; k<l-1 ; k++){ // colonne k
-                flotsmin[((i+1)+(k*h))][(i+1)+((k+1)*h)]= flotsminligne[i];
+                //flotsmin[((i+1)+(k*h))][(i+1)+((k+1)*h)]= flotsminligne[i];
+                flotsmin[((i+1)+(k*h))][0]= flotsminligne[i];
             }  
         }
         
@@ -186,22 +183,39 @@ public class SeamCarving
     }
     
     public static Graph gResiduel(Graph g){
-        for(int i = 0 ; i < itr.length ; i++){
-            for(int j = 0 ; j < itr[0].length ; j++){
-                for(Edge e : g.adj((i+1)+(j*itr.length))){                    
-                    if ((e.from == (i+1)+(j*itr.length))){
-                        e.used = flotsmin[e.from][e.to];                        
+        for(int i = 0 ; i < itrg.length ; i++){
+            for(int j = 0 ; j < itrg[0].length ; j++){
+                for(Edge e : g.adj((i+1)+(j*itrg.length))){                    
+                    if ((e.from == (i+1)+(j*itrg.length))){
+                        //e.used = flotsmin[e.from][e.to]; 
+                        if (e.to == ((i+1)+((j+1)*itrg.length))&&(e.to < itrg.length*itrg[0].length+1)){ // cas droite                          
+                                e.used = flotsmin[e.from][0];
+                        }
+                        else if(e.to == ((i)+((j-1)*itrg.length))){ // cas haut gauche
+                            e.used = flotsmin[e.from][1];
+                        }
+                        else if(e.to == ((i+1)+((j-1)*itrg.length))){ // cas gauche
+                            e.used = flotsmin[e.from][2];
+                        }
+                        else if(e.to == ((i+2)+((j-1)*itrg.length))){ // cas bas gauche
+                            e.used = flotsmin[e.from][3];
+                        }
                     }                    
                     else if(e.from == 0){
-                        e.used = flotsmin[e.to][(e.to)+itr.length];
-                    }
-                    else if( e.to == (i+1)+(j*itr.length)){
-                        e.used = flotsmin[e.from][e.to];
+                        e.used = flotsmin[e.to][0];
+                        
                     }
                     
-                    if (e.to == (itr.length*itr[0].length)+1){
-                        e.used = flotsmin[(e.from)-itr.length][e.from];
-                    }
+                     if (e.to == ((itrg.length)*(itrg[0].length))+1){
+                                e.used = flotsmin[(e.from)-itrg.length][0];
+                                //System.out.println((e.from)-itrg.length);
+                                //System.out.println(flotsmin[(e.from)-itrg.length][0]);
+                                //System.out.println(e.capacity);
+                            }
+                    /*else if( e.to == (i+1)+(j*itr.length)){
+                        e.used = flotsmin[e.from][e.to];
+                    }*/
+                    
                     
                 }
             }
@@ -217,7 +231,7 @@ public class SeamCarving
         int s = 0;
         pere = new int[g.vertices()];
         prof = new int[g.vertices()];
-        int t = (itr.length*itr[0].length)+1;
+        int t = (itrg.length*itrg[0].length)+1;
         boolean trouve = false;
         LinkedList<Integer> l = new LinkedList<Integer>();
         l.offer(s);
@@ -229,7 +243,7 @@ public class SeamCarving
             
             s = (int)l.poll();
 
-            System.out.println("Je visite "+s);
+            //System.out.println("Je visite "+s);
 
             for(Edge e : g.adj(s)){
                 
@@ -248,11 +262,25 @@ public class SeamCarving
                             chemin(0, t);
                             System.out.println(parcours.toString());
                             for(int p = 0 ; p < parcours.size()-1 ; p++){
-                                flotsmin[parcours.get(p)][parcours.get(p+1)] = flotsmin[parcours.get(p)][parcours.get(p+1)] + minf;
+                                for(Edge ep : g.adj(parcours.get(p))){ 
+                                    if (ep.to == ((ep.to+itrg.length))){ // cas droite
+                                        flotsmin[e.from][0] = flotsmin[e.from][0] +minf;
+                                    }
+                                    else if(ep.to == ((ep.to-itrg.length-1))){ // cas haut gauche
+                                        flotsmin[e.from][1] = flotsmin[e.from][1] +minf;
+                                    }
+                                    else if(ep.to == ((ep.to-itrg.length))){ // cas gauche
+                                        flotsmin[e.from][2] = flotsmin[e.from][2] +minf;
+                                    }
+                                    else if(ep.to == ((ep.to-itrg.length+1))){ // cas bas gauche
+                                        flotsmin[e.from][3] = flotsmin[e.from][3] +minf;
+                                    }
+                                }
+                                    //flotsmin[parcours.get(p)][parcours.get(p+1)] = flotsmin[parcours.get(p)][parcours.get(p+1)] + minf;
                             }
-                            g=gResiduel(g);
-                            gResiduel(g).writeFile("residu.txt");
-                            parcoursLargeur(g);
+                            Graph g2=gResiduel(g);
+                            gResiduel(g2).writeFile("residu.txt");
+                            parcoursLargeur(g2);
                             
                             System.out.println("Coupe : ");
                             for(Edge ed : gResiduel(g).edges()){
@@ -260,7 +288,7 @@ public class SeamCarving
                                     coupe.push(ed.from);
                                 }
                             }
-                            for(int n = 0 ; n < itr.length ; n++){
+                            for(int n = 0 ; n < itrg.length ; n++){
                                 System.out.println(coupe.pop());
                                 imgv.remove((int)coupe.pop());
                             }
@@ -284,7 +312,7 @@ public class SeamCarving
                                     coupe.push(ed.from);
                                 }
                             }
-                            for(int n = 0 ; n < itr.length ; n++){
+                            for(int n = 0 ; n < itrg.length ; n++){
                                 System.out.println(coupe.pop());
                                 imgv.remove((int)coupe.pop());
                             }
@@ -304,10 +332,10 @@ public class SeamCarving
         parcours = new ArrayList<Integer>();
         
 	if(src == dest){
-		System.out.println(src);
+		//System.out.println(src);
                 parcours.add(src);
         }
-        else if((pere[dest] == NULL)&&(dest==1%itr.length)){
+        else if((pere[dest] == NULL)&&(dest==1%itrg.length)){
 		System.out.println( "Il n'y a pas de chemin de " +src + " à " +dest);
         }
 	else
@@ -315,13 +343,13 @@ public class SeamCarving
                 
 		chemin(src, pere[dest]);
                 parcours.add(dest);
-		System.out.println(" " + dest);
+		//System.out.println(" " + dest);
 	}
     }
         
 
     public static void main(String[] args) {
-        img = readpgm("ex2.pgm");
+        img = readpgm("ex3.pgm");
         imgv = new ArrayList<Integer>();
         for ( int i = 0 ; i < img.length ; i++){
             for ( int j = 0 ; j < img[0].length ; j++){
