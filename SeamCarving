@@ -2,17 +2,27 @@ package modelisation;
 
 import java.io.*;
 import static java.lang.Math.min;
+import static java.sql.Types.NULL;
 import java.util.*;
 public class SeamCarving
 {
 
+    public static int[][] img;
+    public static int[][] res;
     public static int[][] itr;
     public static int[][] flotsmin; 
+    //HashMap<Integer, Integer> flotsmin; 
+    public static int[] pere;
+    public static int[] prof;
+    public static int minf;
+    public static ArrayList<Integer> parcours;
+    public static ArrayList<Integer> imgv;
     
     public static int[][] readpgm(String fn)
 	{
         try {
             InputStream f = ClassLoader.getSystemClassLoader().getResourceAsStream(fn);
+            System.out.println(f);
             BufferedReader d = new BufferedReader(new InputStreamReader(f));
             String magic = d.readLine();
             String line = d.readLine();
@@ -143,17 +153,17 @@ public class SeamCarving
                 
             }
         }
-        System.out.println(g.edges());
         return g;
     }
     
     public static int flotDepart(Graph g){
         int h = itr.length; // recuperation de la hauteur de l'image
         int l = itr[0].length; // recuperation de la longueur de l'image
-        int[] flotsminligne; // a mettre en local dans fct quand flotsmin en place
+        int[] flotsminligne; 
         
         flotsminligne = new int[h]; // tableau de longueur h contenant la capacité min de chaque ligne du graphe
         flotsmin = new int[h*l+2][h*l+2]; // capacités utilisee des aretes allant de h à l ;
+        //flotsmin = new HashMap<Integer, Integer>;
         for ( int j = 0 ; j < h ; j++){ // initialisation du tableau à +infini
             flotsminligne[j] = (int)Double.POSITIVE_INFINITY;
         }
@@ -165,8 +175,7 @@ public class SeamCarving
             }
             for(int k = 0 ; k<l-1 ; k++){ // colonne k
                 flotsmin[((i+1)+(k*h))][(i+1)+((k+1)*h)]= flotsminligne[i];
-                System.out.println(flotsmin[((i+1)+(k*h))][(i+1)+((k+1)*h)]);
-            }       
+            }  
         }
         
         int flotdep = 0;
@@ -182,13 +191,18 @@ public class SeamCarving
                 for(Edge e : g.adj((i+1)+(j*itr.length))){                    
                     if ((e.from == (i+1)+(j*itr.length))){
                         e.used = flotsmin[e.from][e.to];                        
-                    }
+                    }                    
                     else if(e.from == 0){
                         e.used = flotsmin[e.to][(e.to)+itr.length];
                     }
+                    else if( e.to == (i+1)+(j*itr.length)){
+                        e.used = flotsmin[e.from][e.to];
+                    }
+                    
                     if (e.to == (itr.length*itr[0].length)+1){
                         e.used = flotsmin[(e.from)-itr.length][e.from];
                     }
+                    
                 }
             }
         }
@@ -196,96 +210,128 @@ public class SeamCarving
     }
     
     public static void parcoursLargeur(Graph g){
-        int minf = (int)Double.POSITIVE_INFINITY;
-        int flotdep = flotDepart(g);
+        Stack coupe = new Stack() ;
+        
+        minf = (int)Double.POSITIVE_INFINITY;       
         int[] marque = new int[g.vertices()];
         int s = 0;
+        pere = new int[g.vertices()];
+        prof = new int[g.vertices()];
         int t = (itr.length*itr[0].length)+1;
         boolean trouve = false;
         LinkedList<Integer> l = new LinkedList<Integer>();
         l.offer(s);
         marque[s] = 1;//marquer s;
-        System.out.println("Chemin : ");
+        prof[s] = 0;
+        
+                
         while((l.size()!=0)&&(!trouve)){
+            
             s = (int)l.poll();
+
             System.out.println("Je visite "+s);
+
             for(Edge e : g.adj(s)){
+                
                 if((e.from == s)&&(e.used < e.capacity)){
                     minf = min(minf, (e.capacity-e.used));
                     if(marque[e.to]!=1){ 
                         l.offer(e.to);
                         marque[e.to] = 1;
+                        pere[e.to] = s;
+                        prof[e.to] = prof[s]+1;
                         if(e.to == t){
                             trouve = true;
                             System.out.println("Je visite t");
                             System.out.println("J'ai trouvé un peu de place : "+minf);
-                            //flotdep = flotdep + minf;
+                            System.out.println("Chemin : ");
+                            chemin(0, t);
+                            System.out.println(parcours.toString());
+                            for(int p = 0 ; p < parcours.size()-1 ; p++){
+                                flotsmin[parcours.get(p)][parcours.get(p+1)] = flotsmin[parcours.get(p)][parcours.get(p+1)] + minf;
+                            }
+                            g=gResiduel(g);
+                            gResiduel(g).writeFile("residu.txt");
+                            parcoursLargeur(g);
+                            
+                            System.out.println("Coupe : ");
+                            for(Edge ed : gResiduel(g).edges()){
+                                if((ed.used == ed.capacity)){
+                                    coupe.push(ed.from);
+                                }
+                            }
+                            for(int n = 0 ; n < itr.length ; n++){
+                                System.out.println(coupe.pop());
+                                imgv.remove((int)coupe.pop());
+                            }
+                            for ( int a = 0 ; a < img.length ; a++){
+                                for ( int b = 0 ; b < img[0].length ; b++){
+                                    res[a][b] = imgv.get((1+a)+(b*img[0].length));
+                                }
+                            } 
+                            
+                            
                         }
                     }
                 }
-                //System.out.println("X");
+                
             }
         }
-        
+        System.out.println("Rien trouvé");
+        System.out.println("Coupe : ");
+                            for(Edge ed : gResiduel(g).edges()){
+                                if((ed.used == ed.capacity)){
+                                    coupe.push(ed.from);
+                                }
+                            }
+                            for(int n = 0 ; n < itr.length ; n++){
+                                System.out.println(coupe.pop());
+                                imgv.remove((int)coupe.pop());
+                            }
+                            for ( int a = 0 ; a < img.length ; a++){
+                                for ( int b = 0 ; b < img[0].length ; b++){
+                                    res[a][b] = imgv.get((1+a)+(b*img[0].length));
+                                }
+                            } 
+                                
         
     }
     
-    /*public static int flotDepart(Graph g){ // flot de depart -> somme des min de chaque ligne
-        int h = 0;
-        for (Edge e : g.adj(0)){ // recuperation de la hauteur de l'image
-            h = h+1;
-        }
-        System.out.println(h); // OK
+    
+    //permet de mettre à jour le flot max sur le chemin trouvé par le parcours en largeur
+    public static void chemin(int src, int dest){
+
+        parcours = new ArrayList<Integer>();
         
-        int[] flots = new int[h]; // tableau de longueur h contenant la capacité min de chaque ligne du graphe
-        for ( int j = 0 ; j < h ; j++){ // initialisation du tableau à +infini
-            flots[j] = (int)Double.POSITIVE_INFINITY;
-            System.out.println(flots[j]); // OK
+	if(src == dest){
+		System.out.println(src);
+                parcours.add(src);
         }
+        else if((pere[dest] == NULL)&&(dest==1%itr.length)){
+		System.out.println( "Il n'y a pas de chemin de " +src + " à " +dest);
+        }
+	else
+	{
+                
+		chemin(src, pere[dest]);
+                parcours.add(dest);
+		System.out.println(" " + dest);
+	}
+    }
         
-        System.out.println("----------------------------------------");
-        System.out.println("----------------------------------------");
-        int l = (g.vertices()-2)/h; // recuperation de la longueur de l'image
-        System.out.println("LONGUEUR = "+l); //OK
-        for(int i=0 ; i<h ; i++){ //ligne i
-            for(int k = 0 ; k<l ; k++){ // colonne k
-                System.out.println("**"+((i+1)+(h*k))+"**");
-                for(Edge e : g.adj((i+1)+(h*k))){                    
-                    flots[i] = min(flots[i], e.capacity);
-                    System.out.println(flots[i]);
-                }
-                System.out.println("----------------------------------------");
-            }
-        }
-        
-        int flotdep = 0;
-        for ( int x = 0 ; x < h ; x++){ // somme des capacité min de chaque ligne
-            flotdep = flotdep + flots[x];
-        }
-        return flotdep;     
-    }*/
 
     public static void main(String[] args) {
-        int[][]img = new int[3][4];
-        img[0][0]=3;
-        img[0][1]=11;
-        img[0][3]=39;
-        img[0][2]=24;
-        img[0][3]=39;
-        img[1][0]=8;
-        img[1][1]=21;
-        img[1][2]=29;
-        img[1][3]=39;
-        img[2][0]=74;
-        img[2][1]=80;
-        img[2][2]=100;
-        img[2][3]=200;
+        img = readpgm("ex2.pgm");
+        imgv = new ArrayList<Integer>();
+        for ( int i = 0 ; i < img.length ; i++){
+            for ( int j = 0 ; j < img[0].length ; j++){
+                imgv.add(img[i][j]); 
+            }
+        }
         System.out.println(interest(img));
         System.out.println("FLOTDEPART = "+flotDepart(tograph(interest(img)))+"\n");
-        tograph(interest(img)).writeFile("essai.txt");
-        writepgm(interest(img), "testwrite.pgm");
-        gResiduel(tograph(interest(img))).writeFile("residu1.txt");
         parcoursLargeur(gResiduel(tograph(interest(img))));
+        writepgm(img, "resultat.pgm");
     }
 
 }
